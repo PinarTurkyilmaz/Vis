@@ -161,11 +161,9 @@ class RaycastRendererImplementation(RaycastRenderer):
         v_vector = view_matrix[4:7]
         view_vector = view_matrix[8:11]
         image_center = image_size / 2
-        diagonal=int(image_center)
         img_neg=(-1)*image_center
         volume_center = [volume.dim_x / 2, volume.dim_y / 2, volume.dim_z / 2]
         volume_maximum = volume.get_maximum()
-        # step = 2 if self.interactive_mode else 1
         for i in range(0, image_size, 1):
             for j in range(0, image_size, 1):
                 m = 0
@@ -205,12 +203,8 @@ class RaycastRendererImplementation(RaycastRenderer):
         v_vector = view_matrix[4:7]
         view_vector = view_matrix[8:11]
         image_center = image_size / 2
-        diagonal = int(image_center)
-        neg_diagonal = -1 * diagonal
         img_neg = (-1) * image_center
         volume_center = [volume.dim_x / 2, volume.dim_y / 2, volume.dim_z / 2]
-        volume_maximum = volume.get_maximum()
-        # step = 2 if self.interactive_mode else 1
         self.tfunc.set_test_function()
         for i in range(0, image_size, 1):
             for j in range(0, image_size, 1):
@@ -223,10 +217,7 @@ class RaycastRendererImplementation(RaycastRenderer):
                               volume_center[1] + view_vector[1] * k
                     voxel_z = u_vector[2] * (i - image_center) + v_vector[2] * (j - image_center) + \
                               volume_center[2] + view_vector[2] * k
-                    # if (voxel_x < 0 or voxel_y >= volume.dim_x
-                    #         or voxel_y  < 0 or voxel_y >= volume.dim_y
-                    #         or voxel_z < 0 or voxel_z >= volume.dim_z):
-                    #         continue
+
 
                     tot_vox = get_voxel(volume, voxel_x, voxel_y, voxel_z)
                     color=self.tfunc.get_color(math.floor(tot_vox))
@@ -253,52 +244,101 @@ class RaycastRendererImplementation(RaycastRenderer):
     def render_mouse_brain(self, view_matrix: np.ndarray, annotation_volume: Volume, energy_volumes: dict,
                            image_size: int, image: np.ndarray):
         # TODO: Implement your code considering these volumes (annotation_volume, and energy_volumes)
-        self.clear_image()
-        # an_volume=GradientVolume(annotation_volume)
-        # an_volume.compute()
-        mouse_brain_annotation(self, view_matrix,annotation_volume,energy_volumes,image_size,image)
-        # gradient_volume=GradientVolume(annotation_volume)
-        # gradient_volume.compute()
-        # colors=TFColor(120,120,120,0)
-        # TF_render(self, view_matrix, image_size, image,gradient_volume,colors, annotation_volume)
-        #
-        # for key in energy_volumes:
-        #     energy_colors=TFColor(random.random(),random.random(),random.random(),0)
-        #     TF_render(self, view_matrix, image_size, image, energy_volumes[key],energy_colors, annotation_volume )
+
+        self.mouse_brain_annotation(view_matrix,annotation_volume,energy_volumes,image_size,image)
 
 
-def mouse_brain_energy(self, an_x: float, an_y: float, an_z:float, view_matrix: np.ndarray, energy_volumes:dict, image_size: int, image: np.ndarray):
-    u_vector = view_matrix[0:3]
-    v_vector = view_matrix[4:7]
-    view_vector = view_matrix[8:11]
-    image_center = image_size / 2
-    en=list(energy_volumes.values())[0]
-    en_vol_center=[en.dim_x/2, en.dim_y/2, en.dim_z/2]
-    en_diag=math.floor(math.sqrt(
-            en.dim_x * en.dim_x\
-            + en.dim_y * en.dim_y \
-            + en.dim_z * en.dim_z))
-    neg_en_diag=(-1)*en_diag
-    threshold=15.0
-    step=50
-    for key in energy_volumes.values():
+    def mouse_brain_energy(self,view_matrix: np.ndarray, energy_volumes:dict, image_size: int, image: np.ndarray):
+
+        u_vector = view_matrix[0:3]
+        v_vector = view_matrix[4:7]
+        view_vector = view_matrix[8:11]
+        image_center = image_size / 2
+        img_neg = (-1) * image_center
+        values = energy_volumes.values()
+        en=list(values)[0]
+        en_vol_center=[en.dim_x/2, en.dim_y/2, en.dim_z/2]
+
+        gen = {'purple': TFColor(0.6, 0, 0.8, 0.5),
+               'red': TFColor(1, 0, 0, 0.5),
+               'green': TFColor(0, 1, 0.6, 0.5),
+               'light blue': TFColor(0.7, 1, 1, 0.5),
+               'pink': TFColor(0.8, 0.1, 0.8, 0.5),
+               'yellow': TFColor(0.7, 0.9, 0, 0.5),
+               'orange': TFColor(0.9, 0.5, 0, 0.5)}
+        min=15.0    #try to see the different numbers 20,25
+        step=1
+        c=0
+        colours = ['purple', 'red', 'green', 'light blue', 'pink', 'yellow', 'orange']
+        for key in energy_volumes.values():
+            print (key)
+            col = colours[c]
+            energy_color = gen[col]
+            for i in range(0, image_size, step):
+                for j in range(0, image_size, step):
+
+                    c_color = TFColor(0, 0, 0, 0)
+                    for k in range(int(img_neg), int(image_center), step):
+                        voxel_x = u_vector[0] * (i - image_center) + v_vector[0] * (j - image_center) + \
+                                      en_vol_center[0] + view_vector[0] * k
+                        voxel_y = u_vector[1] * (i - image_center) + v_vector[1] * (j - image_center) + \
+                                      en_vol_center[1] + view_vector[1] * k
+                        voxel_z = u_vector[2] * (i - image_center) + v_vector[2] * (j - image_center) + \
+                                      en_vol_center[2] + view_vector[2] * k
+                        tot_vox = get_voxel(key, voxel_x, voxel_y, voxel_z)
+
+                        if tot_vox>min:
+                            c_color.r = ((energy_color.a) * energy_color.r) + ((1 - energy_color.a) * c_color.r)
+                            c_color.g = ((energy_color.a) * energy_color.g) + ((1 - energy_color.a) * c_color.g)
+                            c_color.b = ((energy_color.a) * energy_color.b) + ((1 - energy_color.a) * c_color.b)
+                            c_color.a = ((energy_color.a) * energy_color.a) + ((1 - energy_color.a) * c_color.a)
+
+                    red = math.floor(c_color.r * 255) if c_color.r < 255 else 255
+                    green = math.floor(c_color.g * 255) if c_color.g < 255 else 255
+                    blue = math.floor(c_color.b * 255) if c_color.b < 255 else 255
+                    alpha = math.floor(c_color.a * 255) if c_color.a < 255 else 255
+
+                    # Assign color to the pixel i, j
+
+                    image[(j * image_size + i) * 4] = red
+                    image[(j * image_size + i) * 4 + 1] = green
+                    image[(j * image_size + i) * 4 + 2] = blue
+                    image[(j * image_size + i) * 4 + 3] = alpha
+            c=c+1
+
+
+    def mouse_brain_annotation(self, view_matrix: np.ndarray, annotation_volume: Volume, energy_volumes:dict, image_size: int, image: np.ndarray):
+
+        print("annotation is starting")
+        u_vector = view_matrix[0:3]
+        v_vector = view_matrix[4:7]
+        view_vector = view_matrix[8:11]
+        image_center = image_size / 2
+        img_neg = (-1) * image_center
+        an_vol_center= [annotation_volume.dim_x / 2, annotation_volume.dim_y / 2, annotation_volume.dim_z / 2]
+        step = 1
+        max_grad_mag = self.annotation_gradient_volume.get_max_gradient_magnitude()
+        print("an_before loop")
         for i in range(0, image_size, step):
             for j in range(0, image_size, step):
-
-                c_color = TFColor(0, 0, 0, 1)
-                for k in range(int(neg_en_diag), int(en_diag), step):
+                c_color = TFColor(0, 0, 0, 0)
+                m=0
+                for k in range(int(img_neg), int(image_center), step):
                     voxel_x = u_vector[0] * (i - image_center) + v_vector[0] * (j - image_center) + \
-                              en_vol_center[0] + view_vector[0] * k
+                              an_vol_center[0] + view_vector[0] * k
                     voxel_y = u_vector[1] * (i - image_center) + v_vector[1] * (j - image_center) + \
-                              en_vol_center[1] + view_vector[1] * k
+                              an_vol_center[1] + view_vector[1] * k
                     voxel_z = u_vector[2] * (i - image_center) + v_vector[2] * (j - image_center) + \
-                              en_vol_center[2] + view_vector[2] * k
-                    tot_vox = mip_get_voxel(key, voxel_x, voxel_y, voxel_z)
-
-                    if((an_x>voxel_x and voxel_x>=0)
-                            or (an_y>voxel_y and voxel_y>=0)
-                                or (an_z>voxel_z and voxel_z>=0)) and tot_vox>threshold:
-                        colors = TFColor(random.random(),random.random(),random.random(),random.random())
+                              an_vol_center[2] + view_vector[2] * k
+                    tot_vox = mip_get_voxel(annotation_volume, voxel_x, voxel_y, voxel_z)
+                    if (tot_vox>m):
+                        print("tot_vox", tot_vox)
+                        grad_mag = self.annotation_gradient_volume.get_gradient(int(math.floor(voxel_x)),
+                                                                                int(math.floor(voxel_y)),
+                                                                                int(math.floor(voxel_z))).magnitude
+                        print("grad_mag:", grad_mag)
+                        grad = grad_mag / (max_grad_mag * 3)
+                        colors = TFColor(169, 109, 173, grad) #purple
                         c_color.r = ((colors.a) * colors.r) + ((1 - colors.a) * c_color.r)
                         c_color.g = ((colors.a) * colors.g) + ((1 - colors.a) * c_color.g)
                         c_color.b = ((colors.a) * colors.b) + ((1 - colors.a) * c_color.b)
@@ -315,120 +355,11 @@ def mouse_brain_energy(self, an_x: float, an_y: float, an_z:float, view_matrix: 
                 image[(j * image_size + i) * 4 + 2] = blue
                 image[(j * image_size + i) * 4 + 3] = alpha
 
+        print("energy is calling")
+        if (len(energy_volumes) == 0):
+            return
 
-def mouse_brain_annotation(self, view_matrix: np.ndarray, annotation_volume: Volume, energy_volumes:dict, image_size: int, image: np.ndarray):
-    u_vector = view_matrix[0:3]
-    v_vector = view_matrix[4:7]
-    view_vector = view_matrix[8:11]
-    image_center = image_size / 2
-    an_vol_center= [annotation_volume.dim_x / 2, annotation_volume.dim_y / 2, annotation_volume.dim_z / 2]
-    max_grad_mag= self.annotation_gradient_volume.get_max_gradient_magnitude()
-    an_diag=math.floor(math.sqrt(
-            annotation_volume.dim_x * annotation_volume.dim_x\
-            + annotation_volume.dim_y * annotation_volume.dim_y \
-            + annotation_volume.dim_z * annotation_volume.dim_z))
-
-    neg_an_diag=(-1)*an_diag
-    step = 100
-    for i in range(0, image_size, step):
-        for j in range(0, image_size, step):
-            c_color = TFColor(0, 0, 0, 0)
-
-            for k in range(int(neg_an_diag), int(an_diag), step):
-                voxel_x = u_vector[0] * (i - image_center) + v_vector[0] * (j - image_center) + \
-                          an_vol_center[0] + view_vector[0] * k
-                voxel_y = u_vector[1] * (i - image_center) + v_vector[1] * (j - image_center) + \
-                          an_vol_center[1] + view_vector[1] * k
-                voxel_z = u_vector[2] * (i - image_center) + v_vector[2] * (j - image_center) + \
-                          an_vol_center[2] + view_vector[2] * k
-                tot_vox = mip_get_voxel(annotation_volume, voxel_x, voxel_y, voxel_z)
-                if tot_vox>0:
-                    grad_mag = self.annotation_gradient_volume.get_gradient(int(math.floor(voxel_x)),
-                                                                                int(math.floor(voxel_y)),
-                                                                                int(math.floor(voxel_z))).magnitude
-                    grad=grad_mag / (max_grad_mag*1.75)
-                    colors = TFColor(0.7, 0.4, 0.5, grad)
-                    c_color.r = ((colors.a) * colors.r) + ((1 - colors.a) * c_color.r)
-                    c_color.g = ((colors.a) * colors.g) + ((1 - colors.a) * c_color.g)
-                    c_color.b = ((colors.a) * colors.b) + ((1 - colors.a) * c_color.b)
-                    c_color.a = ((colors.a) * colors.a) + ((1 - colors.a) * c_color.a)
-
-            red = math.floor(c_color.r * 255) if c_color.r < 255 else 255
-            green = math.floor(c_color.g * 255) if c_color.g < 255 else 255
-            blue = math.floor(c_color.b * 255) if c_color.b < 255 else 255
-            alpha = math.floor(c_color.a * 255) if c_color.a < 255 else 255
-
-            # Assign color to the pixel i, j
-            image[(j * image_size + i) * 4] = red
-            image[(j * image_size + i) * 4 + 1] = green
-            image[(j * image_size + i) * 4 + 2] = blue
-            image[(j * image_size + i) * 4 + 3] = alpha
-
-
-    if len(energy_volumes) == 0:
-        return
-
-    mouse_brain_energy(self, annotation_volume.dim_x, annotation_volume.dim_y, annotation_volume.dim_z, view_matrix,
-                           energy_volumes, image_size, image)
-
-
-
-# def TF_render(self, view_matrix: np.ndarray, image_size: int,image: np.ndarray, gradient_volume: Volume,colors:TFColor):
-#         u_vector = view_matrix[0:3]
-#         v_vector = view_matrix[4:7]
-#         view_vector = view_matrix[8:11]
-#         image_center = image_size / 2
-#         img_neg = (-1) * image_center
-#         volume_center = [volume.dim_x / 2, volume.dim_y / 2, volume.dim_z / 2]
-#         fv = random.random()
-#         radius = 1
-#         alpha_v = 1
-#         step = 50
-#         for i in range(0, image_size, step):
-#             for j in range(0, image_size, step):
-#                 c_color = TFColor(0, 0, 0, 1)
-#                 for k in range(int(img_neg), int(image_center), step):
-#                     voxel_x = u_vector[0] * (i - image_center) + v_vector[0] * (j - image_center) + \
-#                               volume_center[0] + view_vector[0] * k
-#                     voxel_y = u_vector[1] * (i - image_center) + v_vector[1] * (j - image_center) + \
-#                               volume_center[1] + view_vector[1] * k
-#                     voxel_z = u_vector[2] * (i - image_center) + v_vector[2] * (j - image_center) + \
-#                               volume_center[2] + view_vector[2] * k
-#                     fx = get_voxel(gradient_volume, voxel_x, voxel_y, voxel_z)
-#
-#                     if fx>0:
-#
-#                         var_gradient = self.annotation_gradient_volume.get_gradient( int(math.floor(voxel_x)), int(math.floor(voxel_y)), int(math.floor(voxel_z)).magnitude   )
-#
-#
-#
-#                     if mag_grad == 0 and fx == fv:
-#                         alpha = alpha_v * 1
-#
-#                     elif mag_grad > 0 and fx - (radius * mag_grad) <= fv and fx + (radius * mag_grad) >= fv:
-#                         alpha = alpha_v * (1 - 1 / radius * abs((fv - fx) / mag_grad))
-#
-#                     else:
-#                         alpha = 0
-#
-#                     CTotal=CTotal*(1-alpha)+red*alpha
-#                     Alpha=Alpha+(1-Alpha)*alpha
-#
-#
-#                 red = c_color.r * 255 if c_color.r < 255 else 255
-#                 green = c_color.g * 255 if c_color.g < 255 else 255
-#                 blue = c_color.b * 255 if c_color.b < 255 else 255
-#                 Alpha = c_color.a * 255 if c_color.a < 255 else 255
-#
-#         #Assign color to the pixel i, j
-#                 image[(j * image_size + i) * 4] = red
-#                 image[(j * image_size + i) * 4 + 1] = green
-#                 image[(j * image_size + i) * 4 + 2] = blue
-#                 image[(j * image_size + i) * 4 + 3] = Alpha
-#
-#
-
-
+        self.mouse_brain_energy(view_matrix,energy_volumes, image_size, image)
 
 # class GradientVolumeImpl(GradientVolume):
 #     # TODO: Implement gradient compute function. See parent class to check available attributes.

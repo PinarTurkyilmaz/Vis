@@ -75,8 +75,8 @@ class GradientVolume:
         Computes the gradient for the current volume
         """
         # this just initializes all gradients to the vector (0,0,0)
-        a=self.volume.data
-        print(a)
+        # a=self.volume.data
+        # print(a)
         self.data = [ZERO_GRADIENT] * (self.volume.dim_x * self.volume.dim_y * self.volume.dim_z)
         for i in range(0,self.volume.dim_x-1,1):
             for j in range(0, self.volume.dim_y-1,1):
